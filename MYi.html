@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>MYi - Voice Assistant for Document Reading</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+
+  <!-- LINKED CSS -->
+  <link rel="stylesheet" href="MYi.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>MYi - Your Document Reading Assistant</h1>
+      <p class="subtitle">Voice-powered assistant to help read printed and handwritten documents</p>
+    </header>
+
+    <div class="status-indicator">
+      <div id="status-light" class="status-light"></div>
+      <span id="status-text">Initializing...</span>
+    </div>
+
+    <div class="video-container">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="overlay" class="overlay">
+        <div class="focus-guide"></div>
+        <p class="overlay-text">Position document within frame</p>
+      </div>
+      <canvas id="canvas" style="display:none"></canvas>
+    </div>
+
+    <div class="controls">
+      <button id="camera-btn" class="btn" aria-label="Toggle Camera">📷 Camera</button>
+      <button id="read-btn" class="btn" aria-label="Read Document">📖 Read</button>
+      <button id="stop-btn" class="btn" aria-label="Stop Reading">⏹ Stop</button>
+    </div>
+
+    <div class="instructions">
+      <h3>Voice Commands:</h3>
+      <ul>
+        <li>"Hello" or "Start" - Begin conversation</li>
+        <li>"Open camera" - Activate camera</li>
+        <li>"Read it" or "Read document" - Read the document</li>
+        <li>"Stop" - Stop reading</li>
+        <li>"Help" - Get help</li>
+      </ul>
+    </div>
+
+    <div id="log" class="log" role="log" aria-live="polite" aria-atomic="false"></div>
+  </div>
+
+  <!-- LINKED JS -->
+  <script src="MYi.js"></script>
+</body>
+</html>
