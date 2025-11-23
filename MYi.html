@@ -12,38 +12,45 @@
 <body>
   <div class="container">
     <header>
-      <h1>MYi - Your Document Reading Assistant</h1>
-      <p class="subtitle">Voice-powered assistant to help read printed and handwritten documents</p>
+      <div class="language-selector">
+        <label for="lang-select">Language / भाषा:</label>
+        <select id="lang-select" class="lang-select">
+          <option value="en">English</option>
+          <option value="hi">हिंदी (Hindi)</option>
+        </select>
+      </div>
+      <h1 id="app-title">MYi - Your Document Reading Assistant</h1>
+      <p class="subtitle" id="app-subtitle">Voice-powered assistant to help read printed and handwritten documents</p>
     </header>
 
     <div class="status-indicator">
       <div id="status-light" class="status-light"></div>
-      <span id="status-text">Initializing...</span>
+      <span id="status-text" data-en="Initializing..." data-hi="आरंभ हो रहा है...">Initializing...</span>
     </div>
 
     <div class="video-container">
       <video id="video" autoplay playsinline muted></video>
       <div id="overlay" class="overlay">
         <div class="focus-guide"></div>
-        <p class="overlay-text">Position document within frame</p>
+        <p class="overlay-text" data-en="Position document within frame" data-hi="दस्तावेज़ को फ्रेम के भीतर रखें">Position document within frame</p>
       </div>
       <canvas id="canvas" style="display:none"></canvas>
     </div>
 
     <div class="controls">
-      <button id="camera-btn" class="btn" aria-label="Toggle Camera">📷 Camera</button>
-      <button id="read-btn" class="btn" aria-label="Read Document">📖 Read</button>
-      <button id="stop-btn" class="btn" aria-label="Stop Reading">⏹ Stop</button>
+      <button id="camera-btn" class="btn" aria-label="Toggle Camera" data-en="📷 Camera" data-hi="📷 कैमरा">📷 Camera</button>
+      <button id="read-btn" class="btn" aria-label="Read Document" data-en="📖 Read" data-hi="📖 पढ़ें">📖 Read</button>
+      <button id="stop-btn" class="btn" aria-label="Stop Reading" data-en="⏹ Stop" data-hi="⏹ रोकें">⏹ Stop</button>
     </div>
 
     <div class="instructions">
-      <h3>Voice Commands:</h3>
-      <ul>
-        <li>"Hello" or "Start" - Begin conversation</li>
-        <li>"Open camera" - Activate camera</li>
-        <li>"Read it" or "Read document" - Read the document</li>
-        <li>"Stop" - Stop reading</li>
-        <li>"Help" - Get help</li>
+      <h3 id="instructions-title" data-en="Voice Commands:" data-hi="आवाज़ आदेश:">Voice Commands:</h3>
+      <ul id="instructions-list">
+        <li data-en='"Hello" or "Start" - Begin conversation' data-hi='"नमस्ते" या "शुरू करें" - बातचीत शुरू करें'>"Hello" or "Start" - Begin conversation</li>
+        <li data-en='"Open camera" - Activate camera' data-hi='"कैमरा खोलें" - कैमरा सक्रिय करें'>"Open camera" - Activate camera</li>
+        <li data-en='"Read it" or "Read document" - Read the document' data-hi='"इसे पढ़ें" या "दस्तावेज़ पढ़ें" - दस्तावेज़ पढ़ें'>"Read it" or "Read document" - Read the document</li>
+        <li data-en='"Stop" - Stop reading' data-hi='"रोकें" - पढ़ना बंद करें'>"Stop" - Stop reading</li>
+        <li data-en='"Help" - Get help' data-hi='"मदद" - सहायता प्राप्त करें'>"Help" - Get help</li>
       </ul>
     </div>
 
