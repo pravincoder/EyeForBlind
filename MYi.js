@@ -263,7 +263,10 @@ function startMic() {
   recognition.maxAlternatives = 1;
 
   recognition.onresult = (e) => {
-    if (isBusy) return;
+    if (isBusy) {
+      log('Ignoring voice command (busy)', 'system');
+      return;
+    }
     const transcript = e.results[e.resultIndex][0].transcript.trim();
     log(`User: "${transcript}"`, 'user');
     handleVoice(transcript);
@@ -272,35 +275,80 @@ function startMic() {
   recognition.onerror = (e) => {
     log(`Recognition error: ${e.error}`, 'error');
     if (e.error === 'no-speech') {
-      updateStatus('Listening...', 'listening');
+      updateStatus(t('status.listening'), 'listening');
     } else if (e.error === 'not-allowed') {
       updateStatus('Microphone permission denied', 'idle');
       speak(t('messages.micPermission'));
+    } else if (e.error === 'aborted') {
+      // Recognition was aborted, don't restart automatically
+      log('Recognition aborted', 'system');
+    } else if (e.error === 'network') {
+      log('Network error in speech recognition', 'error');
+      // Try to restart after a delay
+      setTimeout(() => {
+        if (!isBusy && recognition) {
+          try {
+            recognition.start();
+          } catch (err) {
+            log(`Failed to restart recognition: ${err.message}`, 'error');
+          }
+        }
+      }, 2000);
     }
   };
 
   recognition.onstart = () => {
     updateStatus(t('status.listening'), 'listening');
-    log('Voice recognition started', 'system');
+    log('Voice recognition started successfully', 'system');
   };
 
   recognition.onend = () => {
-    if (!isBusy) {
-      recognition.start();
+    // Only restart if not busy and recognition object still exists
+    if (!isBusy && recognition) {
+      try {
+        recognition.start();
+      } catch (e) {
+        // If recognition is already running or there's an error, log it
+        if (e.message && !e.message.includes('already started')) {
+          log(`Recognition restart error: ${e.message}`, 'error');
+        }
+      }
     }
   };
 
   try {
     recognition.start();
-    log('Microphone initialized', 'system');
+    log('Attempting to start microphone...', 'system');
   } catch (e) {
     log(`Failed to start recognition: ${e.message}`, 'error');
+    updateStatus('Speech recognition error - check microphone permissions', 'idle');
+    
+    // If it's because recognition is already running, that's okay
+    if (e.message && (e.message.includes('already started') || e.message.includes('already started'))) {
+      log('Recognition already running', 'system');
+      updateStatus(t('status.listening'), 'listening');
+    } else {
+      // Try again after a short delay
+      setTimeout(() => {
+        if (recognition && !isBusy) {
+          try {
+            recognition.start();
+            log('Retrying to start recognition...', 'system');
+          } catch (err) {
+            log(`Recognition retry failed: ${err.message}`, 'error');
+            updateStatus('Microphone access required for voice commands', 'idle');
+            speak("Please allow microphone access to use voice commands. Click the microphone icon in your browser's address bar.");
+          }
+        }
+      }, 1000);
+    }
   }
 }
 
 // Enhanced voice command handler with natural language processing
 async function handleVoice(transcript) {
-  const text = transcript.toLowerCase();
+  const text = transcript.toLowerCase().trim();
+  log(`Processing command: "${text}"`, 'system');
   
   // Stop command - highest priority (both languages)
   const stopCommands = currentLanguage === 'hi' 
@@ -308,6 +356,7 @@ async function handleVoice(transcript) {
     : ["stop", "cancel"];
   
   if (stopCommands.some(cmd => text.includes(cmd)) && (isBusy || speechSynthesis.speaking)) {
+    log('Stop command detected', 'system');
     stopReading = true;
     speechSynthesis.cancel();
     isBusy = false;
@@ -322,6 +371,7 @@ async function handleVoice(transcript) {
     : ["help", "what can you do"];
   
   if (helpCommands.some(cmd => text.includes(cmd))) {
+    log('Help command detected', 'system');
     await speak(t('messages.help'));
     return;
   }
@@ -333,6 +383,7 @@ async function handleVoice(transcript) {
   
   if ((stage === "idle" || stage === "ready") && 
       startCommands.some(cmd => text.includes(cmd))) {
+    log('Start command detected', 'system');
     stage = "ready";
     await speak(t('messages.hello'));
     return;
@@ -345,6 +396,7 @@ async function handleVoice(transcript) {
   
   if ((stage === "ready" || stage === "idle") && 
       cameraCommands.some(cmd => text.includes(cmd))) {
+    log('Camera command detected', 'system');
     await openCam();
     return;
   }
@@ -356,13 +408,17 @@ async function handleVoice(transcript) {
   
   if ((stage === "camera_open" || stage === "ready") && 
       readCommands.some(cmd => text.includes(cmd))) {
+    log('Read command detected', 'system');
     await readNow();
     return;
   }
 
   // If camera is open but command not recognized
   if (stage === "camera_open" && !isBusy) {
+    log(`Command not recognized: "${text}"`, 'system');
     await speak(t('messages.notUnderstood'));
+  } else if (stage === "idle" && !isBusy) {
+    log(`Command not recognized in idle stage: "${text}"`, 'system');
   }
 }
 
@@ -461,6 +517,9 @@ async function readNow() {
     if (!worker) {
       await initOCR();
     }
+    
+    // Determine OCR language based on current language
+    const ocrLang = currentLanguage === 'hi' ? 'hin' : 'eng';
     
     // Use the initialized worker for better performance
     let result;
@@ -620,15 +679,16 @@ document.addEventListener('DOMContentLoaded', () => {
   updateStatus(t('status.initializing'), 'processing');
   log('MYi Document Reading Assistant starting...', 'system');
   
-  // Wait for voices to load
+  // Wait for voices to load, but also start mic immediately
+  // Some browsers don't fire onvoiceschanged event
+  startMic();
+  initOCR();
+  
   if (speechSynthesis.onvoiceschanged !== undefined) {
     speechSynthesis.onvoiceschanged = () => {
-      startMic();
-      initOCR();
+      // Voices loaded, but mic should already be started
+      log('Voices loaded', 'system');
     };
-  } else {
-    startMic();
-    initOCR();
   }
   
   // Welcome message
